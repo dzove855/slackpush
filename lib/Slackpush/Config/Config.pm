@@ -43,7 +43,7 @@ sub save{
 
 sub read{
     my ($self, $configfile, $value) = @_;
-    return "Error" if ! defined($configfile) or ! defined($value);
+    return 0 if ! defined($configfile) or ! defined($value);
     my $config_hash = Config::INI::Reader->read_file($configfile);
     return $config_hash->{_}->{$value} if defined($config_hash->{_}->{$value});
 
