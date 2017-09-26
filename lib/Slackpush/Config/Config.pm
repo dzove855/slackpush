@@ -31,7 +31,7 @@ sub setOpt{
 sub save{
     my ($self, $configfile) = @_;
 
-    return "Error" if ! defined($configfile);
+    return 0 if ! defined($configfile);
 
     foreach my $key (keys %{$self}) {
        Config::INI::Writer->write_file({'_' => { $key => $self->{$key}}}, $configfile);
