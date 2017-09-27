@@ -60,11 +60,7 @@ sub perform{
 
     my $response = $json->decode($response_body);
 
-    if ($response->{ok} == 1) {
-        return 1;
-    } else {
-        return 0;
-    };
+    return $response->{ok};
 };
 
 1;
