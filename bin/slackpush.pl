@@ -3,16 +3,22 @@
 # Simple Slack File Uploader and Downloader Script
 
 use strict;
-use Getopt::Std;
+use Getopt::Long;
 use File::Basename;
+use IO::Handle;
 
+# Custom Libs
 use Slackpush::File::Upload;
 use Slackpush::File::Download;
 use Slackpush::Config::Config;
+use Slackpush::Chat::Postmessage;
+
+Getopt::Long::Configure(qw{no_auto_abbrev no_ignore_case_always});
+#STDIN->blocking(0);
 
 my $VERSION = "0.1";
+my $OPTS = "i:I:U:m:u:d:t:p:n:c:h";
 my ( $softname, $path, $suffix ) = fileparse( $0, qr{\.[^.]*$} );
-my $OPTS = "u:d:t:p:n:c:h";
 my $USAGE = "$softname.$suffix -f [FILE] -c [CHANNEL] [-h HELP] OPTS[$OPTS]";
 my $HELP =<<USAGE;
 
@@ -24,13 +30,17 @@ my $HELP =<<USAGE;
 
      Options:
 
-     	-u	Upload
-	-d	Download (need Fileid)
-	-t	Token (set the token to config file)
-	-p	Path Of file (default /tmp)
-	-n	Filename (default Slack File Name)
-	-c	Channel or User (channel should be \\# Because of shell interpreter
-	-h	Help
+     	-u|--upload	Upload
+	-d|--download	Download (need Fileid)
+	-t|--token	Token (set the token to config file)
+	-p|--filepath	Path Of file (default /tmp)
+	-n|--filename	Filename (default Slack File Name)
+	-c|--channel	Channel or User (channel should be \\# Because of shell interpreter
+	-m|--message	Send Message to user or read stdin
+	-U|--username	As_user false and set Username
+	-i|--iconemoji	Only with --username
+	-I|--iconurl	Only with --username
+	-h|--help	Help
 
      Usage:
 
@@ -63,21 +73,21 @@ sub check_file {
 
 sub curl_upload {
 
-    my (%options) = @_;
+    my ($options) = @_;
 
-    check_file($options{u});
+    check_file($options->{upload});
 
-    do_quit(2, "Channel is empty") if ! defined($options{c});
+    do_quit(2, "Channel is empty") if ! defined($options->{channel});
 
     my $slack = Slackpush::File::Upload->new;
 
     $slack->setOpt("token", get_token());
-    $slack->setOpt("file", $options{u});
-    $slack->setOpt("channel", $options{c});
+    $slack->setOpt("file", $options->{upload});
+    $slack->setOpt("channel", $options->{channel});
 
     my $response = $slack->perform;
 
-    if ( $response) {
+    if ( $response ) {
         do_quit(0,"$softname -> File was uploaded");
     } else {
         do_quit(2,"$softname -> Error while Uploading file");
@@ -87,21 +97,47 @@ sub curl_upload {
 
 sub curl_download {
     
-    my (%options, $token) = @_;
+    my ($options) = @_;
     my $slack = Slackpush::File::Download->new;
 
     $slack->setOpt("token", get_token());
-    $slack->setOpt("fileid", $options{d});
-    $slack->setOpt("filename", $options{n}) if defined($options{n});
-    $slack->setOpt("filepath", $options{p}) if defined($options{p});
+    $slack->setOpt("fileid", $options->{download});
+    $slack->setOpt("filename", $options->{filename}) if defined($options->{filename});
+    $slack->setOpt("filepath", $options->{filepath}) if defined($options->{filepath});
 
     my $response = $slack->perform;
 
-    if ( $response) {
+    if ( $response ) {
         do_quit(0, "$softname -> Filename : $response");
     } else {
         do_quit(2,"$softname -> Error while downloading file");
     };
+};
+
+sub curl_postmessage {
+    my ($options, $postmessage, $softname) = @_;
+
+    do_quit(2, "Channel is empty") if ! defined($options->{channel}); 
+    my $slack = Slackpush::Chat::Postmessage->new;
+    $slack->setOpt("token", get_token());
+    $slack->setOpt("channel", $options->{channel});
+
+    $postmessage->{as_user} = "false" if defined($postmessage->{username}) or defined($postmessage->{icon_emoji}) or defined($postmessage->{icon_url});
+
+    $postmessage->{username} = $softname if ! defined($postmessage->{username}) and ! $postmessage->{as_user} == "false";
+
+    foreach my $key (keys %{$postmessage}) {
+        $slack->setOpt($key, $postmessage->{$key});
+    };
+
+    my $response = $slack->perform;
+
+    if ( $response ) {
+        do_quit(0, "$softname -> Message succesfully send to $options->{channel}")
+    } else {
+        do_quit(2, "$softname -> Error while sendind Message");
+    };
+
 };
 
 sub save_token {
@@ -123,14 +159,34 @@ sub get_token {
     return $config->read($ENV{'HOME'} . '/.' . $softname, 'token');
 };
 
-my %options=();
-getopts($OPTS, \%options);
+my $options = {};
 
-do_quit(0,$HELP) if defined($options{h});
+my $postmessage = {};
 
-save_token($options{t}) if defined($options{t});
+GetOptions(
+    'help|h' 	 	=> \$options->{help},
+    'token|t=s'	 	=> \$options->{token},
+    'channel|c=s'	=> \$options->{channel},
+    'upload|u=s'	=> \$options->{upload},
+    'download|d=s'	=> \$options->{download},
+    'filename|n=s'	=> \$options->{filename},
+    'filepath|p=s'	=> \$options->{filepath},
+    'message|m=s'	=> \$postmessage->{text},
+    'username|U=s'	=> \$postmessage->{username},
+    'iconemoji|i=s'	=> \$postmessage->{icon_emoji},
+    'iconurl|I=s'	=> \$postmessage->{icon_url},
+);
 
-curl_upload(%options) if defined($options{u});
-curl_download(%options) if defined($options{d});
+do_quit(0,$HELP) if defined($options->{help});
+
+save_token($options->{token}) if defined($options->{token});
+
+local $/;
+$postmessage->{text} = <STDIN>;
+
+curl_postmessage($options,$postmessage,$softname) if defined($postmessage->{text});
+
+curl_upload($options) if defined($options->{upload});
+curl_download($options) if defined($options->{download});
 
 do_quit(0,$HELP);
