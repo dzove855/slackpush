@@ -122,7 +122,7 @@ sub curl_postmessage {
 
     $postmessage->{as_user} = "false" if defined($postmessage->{username}) or defined($postmessage->{icon_emoji}) or defined($postmessage->{icon_url});
 
-    $postmessage->{username} = $softname if ! defined($postmessage->{username}) and ! $postmessage->{as_user} == "false";
+    $postmessage->{username} = $softname if ! defined($postmessage->{username}) and $postmessage->{as_user} == "false";
 
     foreach my $key (keys %{$postmessage}) {
         $slack->setOpt($key, $postmessage->{$key});
