@@ -5,7 +5,6 @@
 use strict;
 use Getopt::Long;
 use File::Basename;
-use IO::Handle;
 
 # Custom Libs
 use Slackpush::File::Upload;
@@ -14,7 +13,6 @@ use Slackpush::Config::Config;
 use Slackpush::Chat::Postmessage;
 
 Getopt::Long::Configure(qw{no_auto_abbrev no_ignore_case_always});
-#STDIN->blocking(0);
 
 my $VERSION = "0.1";
 my $OPTS = "i:I:U:m:u:d:t:p:n:c:h";
