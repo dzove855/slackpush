@@ -3,8 +3,10 @@
 # Simple Slack File Uploader and Downloader Script
 
 use strict;
+use Getopt::Std;
 use Getopt::Long;
 use File::Basename;
+use IO::Handle;
 
 # Custom Libs
 use Slackpush::File::Upload;
@@ -13,6 +15,7 @@ use Slackpush::Config::Config;
 use Slackpush::Chat::Postmessage;
 
 Getopt::Long::Configure(qw{no_auto_abbrev no_ignore_case_always});
+STDIN->blocking(0);
 
 my $VERSION = "0.1";
 my $OPTS = "i:I:U:m:u:d:t:p:n:c:h";
@@ -122,7 +125,7 @@ sub curl_postmessage {
 
     $postmessage->{as_user} = "false" if defined($postmessage->{username}) or defined($postmessage->{icon_emoji}) or defined($postmessage->{icon_url});
 
-    $postmessage->{username} = $softname if ! defined($postmessage->{username}) and $postmessage->{as_user} == "false";
+    $postmessage->{username} = $softname if ! defined($postmessage->{username}) and ! $postmessage->{as_user} == "false";
 
     foreach my $key (keys %{$postmessage}) {
         $slack->setOpt($key, $postmessage->{$key});
