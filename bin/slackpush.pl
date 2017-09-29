@@ -183,7 +183,7 @@ do_quit(0,$HELP) if defined($options->{help});
 save_token($options->{token}) if defined($options->{token});
 
 local $/;
-$postmessage->{text} = <STDIN>;
+$postmessage->{text} = <STDIN> if ! defined($postmessage->{text});
 
 curl_postmessage($options,$postmessage,$softname) if defined($postmessage->{text});
 
