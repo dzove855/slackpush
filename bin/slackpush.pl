@@ -20,12 +20,12 @@ STDIN->blocking(0);
 my $VERSION = "0.1";
 my $OPTS = "i:I:U:m:u:d:t:p:n:c:h";
 my ( $softname, $path, $suffix ) = fileparse( $0, qr{\.[^.]*$} );
-my $USAGE = "$softname.$suffix -f [FILE] -c [CHANNEL] [-h HELP] OPTS[$OPTS]";
+my $USAGE = "$softname$suffix -f [FILE] -c [CHANNEL] [-h HELP] OPTS[$OPTS]";
 my $HELP =<<USAGE;
 
      Info:
 
-         Softname : $softname.$suffix
+         Softname : $softname$suffix
          Author   : Dzogovic Vehbo
          Version  : $VERSION
 
@@ -50,7 +50,7 @@ my $HELP =<<USAGE;
      This Script is using Bash Expression, so you can't declare
      Channel by only using #CHANNEL.
      You need to use the bash backslache for Example:
-     $softname.$suffix -u tesfile -c \\#CHANNEL
+     $softname$suffix -u tesfile -c \\#CHANNEL
 
      To use this script you need to install libjson-perl,libwww-curl-perl, libwww-mechanize-perl, libconfig-ini-perl 
      and set your token into the token variable.
