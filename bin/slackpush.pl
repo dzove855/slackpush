@@ -101,9 +101,7 @@ sub curl_download {
     my ($options) = @_;
     my $slack = Slackpush::File::Download->new;
 
-    if ( $options->{download} =~ m|^https://| ) {
-        ($options->{download}) = ($options->{download} =~ m|^https://.+/.+/.+/(.+)/.*|);
-    };
+    ($options->{download}) = ($options->{download} =~ m|^https://.+/.+/.+/(.+)/.*|) if $options->{download} =~ m|^https://|;
 
     $slack->setOpt("token", get_token());
     $slack->setOpt("fileid", $options->{download});
