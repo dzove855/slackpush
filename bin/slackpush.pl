@@ -15,10 +15,12 @@ use Slackpush::Config::Config;
 use Slackpush::Chat::Postmessage;
 
 Getopt::Long::Configure(qw{no_auto_abbrev no_ignore_case_always});
-STDIN->blocking(0);
+
+# Should not be setted
+# STDIN->blocking(0);
 
 my $VERSION = "0.1";
-my $OPTS = "i:I:U:m:u:d:t:p:n:c:h";
+my $OPTS = "i:I:U:m:u:d:t:p:n:c:sh";
 my ( $softname, $path, $suffix ) = fileparse( $0, qr{\.[^.]*$} );
 my $USAGE = "$softname$suffix -f [FILE] -c [CHANNEL] [-h HELP] OPTS[$OPTS]";
 my $HELP =<<USAGE;
@@ -38,6 +40,7 @@ my $HELP =<<USAGE;
 	-n|--filename	Filename (default Slack File Name)
 	-c|--channel	Channel or User (channel should be \\# Because of shell interpreter
 	-m|--message	Send Message to user or read stdin
+        -s|--stdin      Read Message from stdin
 	-U|--username	As_user false and set Username
 	-i|--iconemoji	Only with --username
 	-I|--iconurl	Only with --username
@@ -175,6 +178,7 @@ GetOptions(
     'filename|n=s'	=> \$options->{filename},
     'filepath|p=s'	=> \$options->{filepath},
     'message|m=s'	=> \$postmessage->{text},
+    'stdin|s'           => \$options->{stdin},
     'username|U=s'	=> \$postmessage->{username},
     'iconemoji|i=s'	=> \$postmessage->{icon_emoji},
     'iconurl|I=s'	=> \$postmessage->{icon_url},
@@ -185,7 +189,7 @@ do_quit(0,$HELP) if defined($options->{help});
 save_token($options->{token}) if defined($options->{token});
 
 local $/;
-$postmessage->{text} = <STDIN> if ! defined($postmessage->{text});
+$postmessage->{text} = <STDIN> if ! defined($postmessage->{text}) and defined($options->{stdin});
 
 curl_postmessage($options,$postmessage,$softname) if defined($postmessage->{text});
 
