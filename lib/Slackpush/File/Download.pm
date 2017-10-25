@@ -61,7 +61,8 @@ sub perform{
     if ($response->{ok}) {
 
         $self->{filepath} =~ s|/$||;
-	      $self->{filename} = $response->{file}->{name} if ! defined($self->{filename});
+        $self->{filename} = $response->{file}->{name} if ! defined($self->{filename});
+        $self->{filename} =~ s| |_|g;  
         $curlm->get($response->{file}->{url_private_download}, "Authorization" => "Bearer $self->{token}", ":content_file" => $self->{filepath} . "/" . $self->{filename});
 
     } else {
