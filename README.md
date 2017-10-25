@@ -45,5 +45,5 @@ Send Message as a bot:
 
 Send Message from stdin:
 ```
-    echo "heelo" | slackpush.pl --channel="#general"
+    echo "hello" | slackpush.pl --channel="#general" --stdin
 ```
